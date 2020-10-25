@@ -18,9 +18,17 @@ class AGeometrixCharacter : public ACharacter
 	/** Camera boom positioning the camera beside the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* CameraBoom;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+    class UStaticMeshComponent* CurrentShape;
+  
+    class UStaticMesh *CubeMesh, *SphereMesh, *WedgeMesh;
+    
+  DECLARE_DELEGATE_OneParam(ShapeDelegate, int32);
 
 protected:
-
+  void SwitchShape(int shape);
+    
 	/** Called for side to side input */
 	void MoveRight(float Val);
 

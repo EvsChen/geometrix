@@ -6,6 +6,8 @@
 #include "Components/InputComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Engine/StaticMesh.h"
 
 AGeometrixCharacter::AGeometrixCharacter()
 {
@@ -30,7 +32,16 @@ AGeometrixCharacter::AGeometrixCharacter()
 	SideViewCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("SideViewCamera"));
 	SideViewCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	SideViewCameraComponent->bUsePawnControlRotation = false; // We don't want the controller rotating the camera
-
+    
+    CurrentShape = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CurrentShape"));
+    ConstructorHelpers::FObjectFinder<UStaticMesh> CubeObj(TEXT("/Game/StarterContent/Shapes/Shape_Cube.Shape_Cube"));
+    ConstructorHelpers::FObjectFinder<UStaticMesh> SphereObj(TEXT("/Game/StarterContent/Shapes/Shape_Sphere.Shape_Sphere"));
+    ConstructorHelpers::FObjectFinder<UStaticMesh> WedgeObj(TEXT("/Game/StarterContent/Shapes/Shape_Wedge_A.Shape_Wedge_A"));
+    CubeMesh = CubeObj.Object;
+    SphereMesh = SphereObj.Object;
+    WedgeMesh = WedgeObj.Object;
+    SwitchShape(1);
+    
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Face in the direction we are moving..
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f); // ...at this rotation rate
@@ -53,10 +64,24 @@ void AGeometrixCharacter::SetupPlayerInputComponent(class UInputComponent* Playe
 	// set up gameplay key bindings
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
-	PlayerInputComponent->BindAxis("MoveRight", this, &AGeometrixCharacter::MoveRight);
+	PlayerInputComponent->BindAxis("MoveRight", this, &AGeometrixCharacter::MoveRight); 
+    PlayerInputComponent->BindAction<ShapeDelegate>("Shape1", IE_Pressed, this, &AGeometrixCharacter::SwitchShape, 1);
+    PlayerInputComponent->BindAction<ShapeDelegate>("Shape2", IE_Pressed, this, &AGeometrixCharacter::SwitchShape, 2);
+    PlayerInputComponent->BindAction<ShapeDelegate>("Shape3", IE_Pressed, this, &AGeometrixCharacter::SwitchShape, 3);
 
 	PlayerInputComponent->BindTouch(IE_Pressed, this, &AGeometrixCharacter::TouchStarted);
 	PlayerInputComponent->BindTouch(IE_Released, this, &AGeometrixCharacter::TouchStopped);
+}
+
+void AGeometrixCharacter::SwitchShape(int shape) {
+  if (shape == 1) {
+      CurrentShape->SetStaticMesh(CubeMesh);
+  } else if (shape == 2) {
+      CurrentShape->SetStaticMesh(SphereMesh);
+  } else if (shape == 3) {
+      CurrentShape->SetStaticMesh(WedgeMesh);
+  }
+  CurrentShape->SetRelativeLocation_Direct(FVector(0, 0, 0));
 }
 
 void AGeometrixCharacter::MoveRight(float Value)
