@@ -24,7 +24,7 @@ class AGeometrixCharacter : public ACharacter
   
     class UStaticMesh *CubeMesh, *SphereMesh, *WedgeMesh;
     
-  DECLARE_DELEGATE_OneParam(ShapeDelegate, int32);
+    DECLARE_DELEGATE_OneParam(ShapeDelegate, int32);
 
 protected:
   void SwitchShape(int shape);
