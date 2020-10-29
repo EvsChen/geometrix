@@ -3,7 +3,6 @@
 
 #include "FoamBuff.h"
 #include "GeometrixCharacter.h"
-#include "MyPawn.h"
 
 // Sets default values
 AFoamBuff::AFoamBuff()
@@ -27,22 +26,33 @@ void AFoamBuff::BeginPlay()
 	Super::BeginPlay();
 	OnActorHit.AddDynamic(this, &AFoamBuff::onHit);
 
+
+
 }
 
 // Called every frame
 void AFoamBuff::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+
 }
 
 
 void AFoamBuff::onHit(AActor* SelfActor, class AActor* OtherActor, FVector NormalImpulse,
 	const FHitResult& Hit) {
-	if (OtherActor && (OtherActor != this) && OtherActor->IsA(AMyPawn::StaticClass()))
+	if (OtherActor && (OtherActor != this) && OtherActor->IsA(APawn::StaticClass()))
 	{
 		Destroy();
-        AMyPawn *pawn = Cast<AMyPawn>(OtherActor);
-        pawn->mSetMaterial(MaterialEnum::FOAM);
+		CurrentShape = Cast<UStaticMeshComponent>(OtherActor->GetComponentByClass(UStaticMeshComponent::StaticClass()));
+		CurrentShape->SetMassScale(NAME_None,0.1f);
+
+		UMaterial* FoundMaterial = LoadObject<UMaterial>(NULL, TEXT("/Game/foamMaterial.foamMaterial"), NULL, LOAD_None, NULL);
+		StoredMaterial = FoundMaterial;
+		DynamicMaterialInst = UMaterialInstanceDynamic::Create(StoredMaterial, CurrentShape);
+		CurrentShape->SetMaterial(0, DynamicMaterialInst);
+
+
 	}
 
 }

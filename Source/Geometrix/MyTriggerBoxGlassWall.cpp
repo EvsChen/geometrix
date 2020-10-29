@@ -46,7 +46,7 @@ void AMyTriggerBoxGlassWall::OnOverlapBegin(class AActor* OverlappedActor, class
                 TArray<AActor*> Actors;
                 UGameplayStatics::GetAllActorsWithTag(GetWorld(), TEXT("glass"), Actors);
      
-                print("Found");
+                //print("Found");
                 for (AActor* Actor : Actors)
                 {
 
@@ -73,7 +73,7 @@ void AMyTriggerBoxGlassWall::OnOverlapEnd(class AActor* OverlappedActor, class A
     if (OtherActor && (OtherActor != this)/* && OtherActor is Sphere*/) {
         // print to screen using above defined method when actor leaves trigger box
         //print("Close door");
-        printFString("%s has left the Trigger Box", *OtherActor->GetName());
+        //printFString("%s has left the Trigger Box", *OtherActor->GetName());
         TArray<AActor*> Actors;
         UGameplayStatics::GetAllActorsWithTag(GetWorld(), TEXT("glass"), Actors);
         for (AActor* Actor : Actors)
