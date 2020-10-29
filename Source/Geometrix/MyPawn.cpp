@@ -106,6 +106,6 @@ void AMyPawn::MoveRight(float Value)
         Value *= -3000;
         CurrentShape->AddImpulse(FVector(0, Value, 0));
     }
-    UE_LOG(LogTemp, Warning, TEXT("Move right with value %f"), Value);
+    //UE_LOG(LogTemp, Warning, TEXT("Move right with value %f"), Value);
 }
 
