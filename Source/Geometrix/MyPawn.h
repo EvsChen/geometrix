@@ -47,7 +47,7 @@ protected:
     
     void MoveRight(float Value);
     
-    ShapeEnum shape;
+
 
 public:	
 	// Called every frame
@@ -55,5 +55,7 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+    ShapeEnum shape;
 
 };
