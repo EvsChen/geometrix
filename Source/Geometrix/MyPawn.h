@@ -7,6 +7,7 @@
 #include "MyPawn.generated.h"
 
 enum class ShapeEnum { CUBE, SPHERE, WEDGE, CROSS };
+enum class MaterialEnum { DEFAULT, ICE, FOAM, FOAM_IN_WATER };
 
 UCLASS()
 class GEOMETRIX_API AMyPawn : public APawn
@@ -29,6 +30,7 @@ class GEOMETRIX_API AMyPawn : public APawn
     class ACameraActor *SideViewCamera;
   
     class UStaticMesh *CubeMesh, *SphereMesh, *WedgeMesh;
+    class UMaterial *FoamMat;
     
     FVector cubeBoundLocal[4];
     
@@ -47,6 +49,8 @@ protected:
     
     void MoveRight(float Value);
     
+    void TranslateRight(float Value);
+    MaterialEnum m_Mat;
 
 
 public:	
@@ -57,5 +61,8 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
     ShapeEnum shape;
-
+    
+    
+    void mSetMaterial(MaterialEnum mat);
+    MaterialEnum mGetMaterial();
 };

@@ -11,7 +11,7 @@
 #include "Camera/CameraActor.h"
 #include "GameFramework/PlayerController.h"
 #include "Math/Box.h"
-#include <vector>
+#include "Materials/Material.h"
 
 
 // Sets default values
@@ -36,6 +36,8 @@ AMyPawn::AMyPawn() : shape(ShapeEnum::CUBE)
     SphereMesh = SphereObj.Object;
     WedgeMesh = WedgeObj.Object;
     SwitchShape(1);
+    
+    FoamMat = LoadObject<UMaterial>(NULL, TEXT("/Game/foamMaterial.foamMaterial"), NULL, LOAD_None, NULL);
     
     int cubeScaleZ = 2;
     FBox cubeBox = CubeMesh->GetBoundingBox();
@@ -100,7 +102,7 @@ void AMyPawn::Tick(float DeltaTime)
     FVector angVel = CurrentShape->GetPhysicsAngularVelocityInDegrees();
     FVector linVel = CurrentShape->GetPhysicsLinearVelocity();
 //    UE_LOG(LogTemp, Warning, TEXT("angVel is %f %f %f"), angVel[0], angVel[1], angVel[2]);
-    UE_LOG(LogTemp, Warning, TEXT("linVel is %f %f %f"), linVel[0], linVel[1], linVel[2]);
+//    UE_LOG(LogTemp, Warning, TEXT("linVel is %f %f %f"), linVel[0], linVel[1], linVel[2]);
     bool exceedAngVel = false, exceedLinVel = false;
     if (shape == ShapeEnum::CUBE) {
         exceedAngVel = exceedAngVel || clamp(angVel[0], 100, -100);
@@ -121,6 +123,7 @@ void AMyPawn::Tick(float DeltaTime)
 void AMyPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
     PlayerInputComponent->BindAxis("MoveRight", this, &AMyPawn::MoveRight);
+    PlayerInputComponent->BindAxis("TranslateRight", this, &AMyPawn::TranslateRight);
     PlayerInputComponent->BindAction<ShapeDelegate>("Shape1", IE_Pressed, this, &AMyPawn::SwitchShape, 1);
     PlayerInputComponent->BindAction<ShapeDelegate>("Shape2", IE_Pressed, this, &AMyPawn::SwitchShape, 2);
     PlayerInputComponent->BindAction<ShapeDelegate>("Shape3", IE_Pressed, this, &AMyPawn::SwitchShape, 3);
@@ -145,12 +148,21 @@ void AMyPawn::SwitchShape(int shapeIdx) {
 //    CurrentShape->SetRelativeLocation_Direct(FVector(0, 0, 0));
 }
 
+void AMyPawn::TranslateRight(float Value) {
+    if (Value < 0.001 && Value > -0.001) {
+        return;
+    }
+    CurrentShape->AddImpulse(FVector(0, Value * -100, 0));
+}
+
 
 void AMyPawn::MoveRight(float Value)
 {
     if (Value < 0.001 && Value > -0.001) {
         return;
     }
+    float massScale = CurrentShape->GetMassScale();
+    Value *= massScale;
     if (shape == ShapeEnum::CUBE) {
         // Find the contact point with ground
         FVector loc = GetActorLocation();
@@ -199,3 +211,21 @@ void AMyPawn::MoveRight(float Value)
     //UE_LOG(LogTemp, Warning, TEXT("Move right with value %f"), Value);
 }
 
+void AMyPawn::mSetMaterial(MaterialEnum mat) {
+    m_Mat = mat;
+    if (mat == MaterialEnum::FOAM) {
+        CurrentShape->SetMassScale(NAME_None,0.1f);
+        UMaterialInstanceDynamic *DynamicMaterialInst = UMaterialInstanceDynamic::Create(FoamMat, CurrentShape);
+        CurrentShape->SetMaterial(0, DynamicMaterialInst);
+    } else if (mat == MaterialEnum::FOAM_IN_WATER) {
+        CurrentShape->SetMassScale(NAME_None, 4.0f);
+        UMaterialInterface* MeshMat = CurrentShape->GetMaterial(0);
+        UMaterialInstanceDynamic* dy = UMaterialInstanceDynamic::Create(MeshMat, this);
+        dy->SetVectorParameterValue(FName(TEXT("BaseColor")), FLinearColor(0.080128f, 0.0762f, 1.0f));
+        CurrentShape->SetMaterial(0, dy);
+    }
+}
+
+MaterialEnum AMyPawn::mGetMaterial() {
+    return m_Mat;
+}

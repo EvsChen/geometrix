@@ -3,6 +3,7 @@
 
 #include "WaterPlatform.h"
 #include "GeometrixCharacter.h"
+#include "MyPawn.h"
 
 // Sets default values
 AWaterPlatform::AWaterPlatform()
@@ -41,27 +42,12 @@ void AWaterPlatform::Tick(float DeltaTime)
 
 void AWaterPlatform::onHit(AActor* SelfActor, class AActor* OtherActor, FVector NormalImpulse,
 	const FHitResult& Hit) {
-	if (OtherActor && (OtherActor != this) && OtherActor->IsA(APawn::StaticClass()))
+	if (OtherActor && (OtherActor != this) && OtherActor->IsA(AMyPawn::StaticClass()))
 	{
-		CurrentShape = Cast<UStaticMeshComponent>(OtherActor->GetComponentByClass(UStaticMeshComponent::StaticClass()));
-		
-
-		UMaterial* FoundMaterial = LoadObject<UMaterial>(NULL, TEXT("/Game/foamMaterial.foamMaterial"), NULL, LOAD_None, NULL);
-		UMaterial* FoundMaterial2 = LoadObject<UMaterial>(NULL, TEXT("/Game/iceMaterial.iceMaterial"), NULL, LOAD_None, NULL);
-		UE_LOG(LogTemp, Warning, TEXT("%s %s %s %s"), FoundMaterial, FoundMaterial2,  CurrentShape->GetMaterial(0)->GetMaterial(), CurrentShape->GetMaterial(1));
-		if (CurrentShape->GetMaterial(0)->GetMaterial() == FoundMaterial) {
-		
-			CurrentShape->SetMassScale(NAME_None, 40.0f);
-			
-			//UMaterialInstanceDynamic* mesh1P = ((UMaterialInstanceDynamic*)(CurrentShape->GetMaterial(0)))->SetVectorParameterValue(FName(TEXT("BaseColor")), FLinearColor(0.080128f, 0.0762f, 1.0f));
-			UMaterialInterface* MeshMat = CurrentShape->GetMaterial(0);
-			UMaterialInstanceDynamic* dy = UMaterialInstanceDynamic::Create(MeshMat, this);
-			dy->SetVectorParameterValue(FName(TEXT("BaseColor")), FLinearColor(0.080128f, 0.0762f, 1.0f));
-			CurrentShape->SetMaterial(0, dy);
-			UE_LOG(LogTemp, Warning, TEXT("mass"));
+        AMyPawn *pawn = Cast<AMyPawn>(OtherActor);
+		if (pawn->mGetMaterial() == MaterialEnum::FOAM) {
+            pawn->mSetMaterial(MaterialEnum::FOAM_IN_WATER);
 		}
-
-
 	}
 
 }
