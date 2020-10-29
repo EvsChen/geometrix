@@ -30,6 +30,8 @@ class GEOMETRIX_API AMyPawn : public APawn
   
     class UStaticMesh *CubeMesh, *SphereMesh, *WedgeMesh;
     
+    FVector cubeBoundLocal[4];
+    
     // Useful template for adding parameters to bindAction
     DECLARE_DELEGATE_OneParam(ShapeDelegate, int32);
 
