@@ -13,6 +13,11 @@
 #include "Math/Box.h"
 #include "Materials/Material.h"
 
+#define EPS 0.001
+
+void debugVec(FString s, const FVector &v) {
+    UE_LOG(LogTemp, Warning, TEXT("%s is %f %f %f"), *s, v[0], v[1], v[2]);
+}
 
 // Sets default values
 AMyPawn::AMyPawn() : shape(ShapeEnum::CUBE)
@@ -38,21 +43,33 @@ AMyPawn::AMyPawn() : shape(ShapeEnum::CUBE)
     SwitchShape(1);
     
     FoamMat = LoadObject<UMaterial>(NULL, TEXT("/Game/foamMaterial.foamMaterial"), NULL, LOAD_None, NULL);
-    
+    SetCubeBounds();
+    SetWedgeBounds();
+}
+
+void AMyPawn::SetCubeBounds() {
     int cubeScaleZ = 2;
     FBox cubeBox = CubeMesh->GetBoundingBox();
     FVector cubeMin = cubeBox.Min, cubeMax = cubeBox.Max;
     cubeMin[2] *= cubeScaleZ;
     cubeMax[2] *= cubeScaleZ;
-    float cubeX = (cubeMin[0] + cubeMax[0]) / 2.f;
     // Left bottom
-    cubeBoundLocal[0] = FVector(cubeX, cubeMax[1], cubeMin[2]);
+    cubeBoundLocal[0] = FVector(0, cubeMax[1], cubeMin[2]);
     // Left top
-    cubeBoundLocal[1] = FVector(cubeX, cubeMax[1], cubeMax[2]);
+    cubeBoundLocal[1] = FVector(0, cubeMax[1], cubeMax[2]);
     // Right top
-    cubeBoundLocal[2] = FVector(cubeX, cubeMin[1], cubeMax[2]);
+    cubeBoundLocal[2] = FVector(0, cubeMin[1], cubeMax[2]);
     // Right bottom
-    cubeBoundLocal[3] = FVector(cubeX, cubeMin[1], cubeMin[2]);
+    cubeBoundLocal[3] = FVector(0, cubeMin[1], cubeMin[2]);
+}
+
+void AMyPawn::SetWedgeBounds() {
+    // right most
+    wedgeBoundLocal[0] = FVector(0, 50, 50);
+    // left top
+    wedgeBoundLocal[1] = FVector(50, -50, 50);
+    // left bottom
+    wedgeBoundLocal[2] = FVector(-50, -50, 50);
 }
 
 // Called when the game starts or when spawned
@@ -60,6 +77,7 @@ void AMyPawn::BeginPlay()
 {
 	Super::BeginPlay();
     SwitchShape(1);
+    // Setup camera following
     TArray<AActor*> outActors;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACameraActor::StaticClass(), outActors);
     for (int i = 0; i < outActors.Num(); i++) {
@@ -74,6 +92,8 @@ void AMyPawn::BeginPlay()
         APlayerController *pc = UGameplayStatics::GetPlayerController(GetWorld(), 0);
         pc->SetViewTargetWithBlend(SideViewCamera);
     }
+    
+//    OnActorHit.AddDynamic(this, &AMyPawn::onHit);
 }
 
 bool clamp(float &vel, float max, float min) {
@@ -101,8 +121,6 @@ void AMyPawn::Tick(float DeltaTime)
     }
     FVector angVel = CurrentShape->GetPhysicsAngularVelocityInDegrees();
     FVector linVel = CurrentShape->GetPhysicsLinearVelocity();
-//    UE_LOG(LogTemp, Warning, TEXT("angVel is %f %f %f"), angVel[0], angVel[1], angVel[2]);
-//    UE_LOG(LogTemp, Warning, TEXT("linVel is %f %f %f"), linVel[0], linVel[1], linVel[2]);
     bool exceedAngVel = false, exceedLinVel = false;
     if (shape == ShapeEnum::CUBE) {
         exceedAngVel = exceedAngVel || clamp(angVel[0], 100, -100);
@@ -110,6 +128,9 @@ void AMyPawn::Tick(float DeltaTime)
     } else if (shape == ShapeEnum::SPHERE) {
         exceedAngVel = exceedAngVel || clamp(angVel[0], 500, -500);
         exceedLinVel = exceedLinVel || clamp(linVel[2], 400, -400);
+    } else if (shape == ShapeEnum::WEDGE) {
+        exceedAngVel = exceedAngVel || clamp(angVel[0], 60, -60);
+        exceedLinVel = exceedLinVel || clamp(linVel[2], 300, -300);
     }
     if (exceedAngVel) {
         CurrentShape->SetPhysicsAngularVelocityInDegrees(angVel);
@@ -133,20 +154,24 @@ void AMyPawn::SwitchShape(int shapeIdx) {
   if (shapeIdx == 1) {
       shape = ShapeEnum::CUBE;
       CurrentShape->SetStaticMesh(CubeMesh);
+      CurrentShape->SetRelativeRotation(FRotator(0, 0, 0));
       CurrentShape->SetRelativeScale3D(FVector(1, 1, 2));
   } else if (shapeIdx == 2) {
       shape = ShapeEnum::SPHERE;
       CurrentShape->SetStaticMesh(SphereMesh);
+      CurrentShape->SetRelativeRotation(FRotator(0, 0, 0));
       CurrentShape->SetRelativeScale3D(FVector(1, 1, 1));
   } else if (shapeIdx == 3) {
       shape = ShapeEnum::WEDGE;
       CurrentShape->SetStaticMesh(WedgeMesh);
-      CurrentShape->SetWorldRotation(FRotator(0, 90, 90));
+      CurrentShape->SetRelativeRotation(FRotator(90, 0, 0));
+      CurrentShape->AddWorldOffset(FVector(0, 0, 20));
       CurrentShape->SetRelativeScale3D(FVector(1, 1, 1));
   }
     CurrentShape->RecreatePhysicsState();
 //    CurrentShape->SetRelativeLocation_Direct(FVector(0, 0, 0));
 }
+
 
 void AMyPawn::TranslateRight(float Value) {
     if (Value < 0.001 && Value > -0.001) {
@@ -164,49 +189,17 @@ void AMyPawn::MoveRight(float Value)
     float massScale = CurrentShape->GetMassScale();
     Value *= massScale;
     if (shape == ShapeEnum::CUBE) {
-        // Find the contact point with ground
-        FVector loc = GetActorLocation();
-        const FTransform &trans = GetTransform();
-        TArray<FVector> worldBound;
-        for (int i = 0; i < 4; i++) {
-            FVector &b = cubeBoundLocal[i];
-            // Get bound in world space
-            worldBound.Push(loc + trans.TransformVector(b));
-        }
-        FVector center = (worldBound[0] + worldBound[2]) / 2.f;
-        // Get the lowest two vertices
-        worldBound.Sort([](const FVector &a, const FVector &b) {
-            return a[2] < b[2];
-        });
-        FVector contactRight, contactLeft;
-        // -Y is the positive direction
-        if (worldBound[0][1] < worldBound[1][1]) {
-            contactRight = worldBound[0];
-            contactLeft = worldBound[1];
-        } else {
-            contactRight = worldBound[1];
-            contactLeft = worldBound[0];
-        }
-        bool moveRight = Value > 0;
-        FVector contactPoint = moveRight ? contactRight : contactLeft;
-        FVector forcePoint = center + (center - contactPoint);
-        FVector forceDir = FVector::CrossProduct(FVector(1, 0, 0), forcePoint - center);
-        FVector force = forceDir.GetUnsafeNormal() * Value * 3000;
-//        UE_LOG(LogTemp, Warning, TEXT("contactPoint is %f %f %f"), contactPoint[0], contactPoint[1], contactPoint[2]);
-//        UE_LOG(LogTemp, Warning, TEXT("center is %f %f %f"), center[0], center[1], center[2]);
-//        UE_LOG(LogTemp, Warning, TEXT("force is %f %f %f"), force[0], force[1], force[2]);
-//        UE_LOG(LogTemp, Warning, TEXT("forcePoint is %f %f %f"), forcePoint[0], forcePoint[1], forcePoint[2]);
+        FVector force, forcePoint;
+        GetCubeForce(Value, force, forcePoint);
         CurrentShape->AddImpulseAtLocation(force, forcePoint, NAME_None);
         
-//        FVector axis(0, 0, -1);
-//        axis *= Value * 5000;
-//        CurrentShape->AddTorqueInDegrees(axis, NAME_None, true);
     } else if (shape == ShapeEnum::SPHERE) {
         Value *= -1000;
         CurrentShape->AddImpulse(FVector(0, Value, 0));
     } else if (shape == ShapeEnum::WEDGE) {
-        Value *= -3000;
-        CurrentShape->AddImpulse(FVector(0, Value, 0));
+        FVector force, forcePoint;
+        GetWedgeForce(Value, force, forcePoint);
+        CurrentShape->AddImpulseAtLocation(force, forcePoint, NAME_None);
     }
     //UE_LOG(LogTemp, Warning, TEXT("Move right with value %f"), Value);
 }
@@ -228,4 +221,98 @@ void AMyPawn::mSetMaterial(MaterialEnum mat) {
 
 MaterialEnum AMyPawn::mGetMaterial() {
     return m_Mat;
+}
+
+void AMyPawn::GetCubeForce(float Value, FVector &force, FVector &forcePoint) const {
+    // Find the contact point with ground
+    FVector loc = GetActorLocation();
+    const FTransform &trans = GetTransform();
+    FVector localCenter(0, 0, 100);
+    FVector center = loc + trans.TransformVector(localCenter);
+    FVector contactPoint;
+    TArray<FVector> worldBound;
+    for (int i = 0; i < 4; i++) {
+        FVector b = cubeBoundLocal[i];
+        // Get bound in world space
+        worldBound.Push(loc + trans.TransformVector(b));
+    }
+    // Get the lowest two vertices
+    worldBound.Sort([](const FVector &a, const FVector &b) {
+        return a[2] < b[2];
+    });
+    FVector contactRight, contactLeft;
+    // -Y is the positive direction
+    if (worldBound[0][1] < worldBound[1][1]) {
+        contactRight = worldBound[0];
+        contactLeft = worldBound[1];
+    } else {
+        contactRight = worldBound[1];
+        contactLeft = worldBound[0];
+    }
+    bool moveRight = Value > 0;
+    contactPoint = moveRight ? contactRight : contactLeft;
+    forcePoint = center + (center - contactPoint);
+    FVector forceDir = FVector::CrossProduct(FVector(1, 0, 0), forcePoint - center);
+    force = forceDir.GetUnsafeNormal() * Value * 3000;
+}
+
+
+void AMyPawn::GetWedgeForce(float Value, FVector &force, FVector &forcePoint) const {
+    // Find the contact point with ground
+    bool moveRight = Value > 0;
+    FVector loc = GetActorLocation();
+    const FTransform &trans = GetTransform();
+    using boundP = std::pair<FVector, int>;
+    TArray<boundP> worldBound;
+    for (int i = 0; i < 3; i++) {
+        FVector b = wedgeBoundLocal[i];
+        // Get bound in world space
+        worldBound.Push({ loc + trans.TransformVector(b), i });
+    }
+    FVector center = loc + trans.TransformVector(FVector(0, 0, 50));
+    // Get the lowest two vertices
+    worldBound.Sort([](const boundP &a, const boundP &b) {
+        return a.first[2] < b.first[2];
+    });
+    int idx;
+    float lowz1 = worldBound[0].first[2],
+          lowz2 = worldBound[1].first[2];
+    if (lowz2 - lowz1 > EPS) {
+        idx = 0;
+    } else {
+        int rightIdx, leftIdx;
+        // -Y is the positive direction
+        if (worldBound[0].first[1] < worldBound[1].first[1]) {
+            rightIdx = 0;
+            leftIdx = 1;
+        } else {
+            rightIdx = 1;
+            leftIdx = 0;
+        }
+        idx = moveRight ? rightIdx : leftIdx;
+    }
+    FVector contactPoint = worldBound[idx].first;
+    int vertIdx = worldBound[idx].second;
+    int forceVertIdx = moveRight ? (vertIdx + 1) % 3 : (vertIdx + 2) % 3;
+    for (int i = 0; i < 3; i++) {
+        if (worldBound[i].second == forceVertIdx) {
+            forcePoint = worldBound[i].first;
+            break;
+        }
+    }
+    FVector forceDir = FVector::CrossProduct(FVector(1, 0, 0), forcePoint - center);
+    force = forceDir.GetUnsafeNormal() * Value * 1500;
+}
+
+
+void AMyPawn::onHit(AActor* SelfActor, class AActor* OtherActor, FVector NormalImpulse, const FHitResult& Hit) {
+    if (!OtherActor || OtherActor == this) {
+        return;
+    }
+    FString name = OtherActor->GetName();
+    if (OtherActor->ActorHasTag(TEXT("collideSolid"))) {
+        collidedSolid = OtherActor;
+        FVector_NetQuantize res = Hit.ImpactPoint;
+        for (int i = 0; i < 3; i++) hitPoint[i] = res[i];
+    }
 }
