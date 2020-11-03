@@ -43,12 +43,14 @@ void AFoamBuff::onHit(AActor* SelfActor, class AActor* OtherActor, FVector Norma
 	{
 		Destroy();
 		CurrentShape = Cast<UStaticMeshComponent>(OtherActor->GetComponentByClass(UStaticMeshComponent::StaticClass()));
-		CurrentShape->SetMassScale(NAME_None,0.1f);
+		CurrentShape->SetMassScale(NAME_None, 0.3f);
+	
 
 		UMaterial* FoundMaterial = LoadObject<UMaterial>(NULL, TEXT("/Game/foamMaterial.foamMaterial"), NULL, LOAD_None, NULL);
 		StoredMaterial = FoundMaterial;
 		DynamicMaterialInst = UMaterialInstanceDynamic::Create(StoredMaterial, CurrentShape);
 		CurrentShape->SetMaterial(0, DynamicMaterialInst);
+		CurrentShape->RecreatePhysicsState();
 
 
 	}

@@ -46,11 +46,11 @@ void Abuff::onHit(AActor* SelfActor, class AActor* OtherActor, FVector NormalImp
 		Destroy();
 		CurrentShape = Cast<UStaticMeshComponent>(OtherActor->GetComponentByClass(UStaticMeshComponent::StaticClass()));
 		
-			
 		UMaterial* FoundMaterial = LoadObject<UMaterial>(NULL, TEXT("/Game/iceMaterial.iceMaterial"), NULL, LOAD_None, NULL);
 		StoredMaterial = FoundMaterial;
 		DynamicMaterialInst = UMaterialInstanceDynamic::Create(StoredMaterial, CurrentShape);
 		CurrentShape->SetMaterial(0, DynamicMaterialInst);
+		CurrentShape->RecreatePhysicsState();
 
 	
 	}

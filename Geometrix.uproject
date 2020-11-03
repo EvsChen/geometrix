@@ -12,5 +12,15 @@
 				"Engine"
 			]
 		}
+	],
+	"Plugins": [
+		{
+			"Name": "ADOSupport",
+			"Enabled": true
+		},
+		{
+			"Name": "ApexDestruction",
+			"Enabled": true
+		}
 	]
 }
