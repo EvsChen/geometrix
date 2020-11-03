@@ -33,6 +33,7 @@ class GEOMETRIX_API AMyPawn : public APawn
     class UMaterial *FoamMat;
     
     FVector cubeBoundLocal[4];
+    FVector wedgeBoundLocal[3];
     
     // Useful template for adding parameters to bindAction
     DECLARE_DELEGATE_OneParam(ShapeDelegate, int32);
@@ -40,6 +41,17 @@ class GEOMETRIX_API AMyPawn : public APawn
 public:
 	// Sets default values for this pawn's properties
 	AMyPawn();
+    
+    // Called every frame
+    virtual void Tick(float DeltaTime) override;
+
+    // Called to bind functionality to input
+    virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+    ShapeEnum shape;
+    
+    void mSetMaterial(MaterialEnum mat);
+    MaterialEnum mGetMaterial();
 
 protected:
 	// Called when the game starts or when spawned
@@ -50,19 +62,22 @@ protected:
     void MoveRight(float Value);
     
     void TranslateRight(float Value);
+    
+    // Return the force to rotate for cube
+    void GetCubeForce(float Value, FVector &force, FVector &forcePoint) const;
+    
+    // Return the force to rotate for cube
+    void GetWedgeForce(float Value, FVector &force, FVector &forcePoint) const;
+    
+    UFUNCTION()
+    void onHit(AActor* SelfActor, class AActor* OtherActor, FVector NormalImpulse, const FHitResult& Hit);
+    
+    AActor *collidedSolid;
+    FVector hitPoint;
     MaterialEnum m_Mat;
-
-
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-    ShapeEnum shape;
     
-    
-    void mSetMaterial(MaterialEnum mat);
-    MaterialEnum mGetMaterial();
+private:
+    void SetCubeBounds();
+    void SetWedgeBounds();
+    void AdjustCameraPos();
 };

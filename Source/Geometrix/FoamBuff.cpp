@@ -34,8 +34,6 @@ void AFoamBuff::BeginPlay()
 void AFoamBuff::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-
 }
 
 
