@@ -133,6 +133,12 @@ void AMyPawn::Tick(float DeltaTime)
     if (exceedLinVel) {
         CurrentShape->SetPhysicsLinearVelocity(linVel);
     }
+
+    //Die if fall
+    FVector loc = GetActorLocation();
+    if (loc[2] < -2000.f) {
+
+    }
 }
 
 void AMyPawn::AdjustCameraPos() {
