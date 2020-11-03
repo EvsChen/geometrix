@@ -74,10 +74,10 @@ protected:
     
     AActor *collidedSolid;
     FVector hitPoint;
-    
     MaterialEnum m_Mat;
     
 private:
     void SetCubeBounds();
     void SetWedgeBounds();
+    void AdjustCameraPos();
 };

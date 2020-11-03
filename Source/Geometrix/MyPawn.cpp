@@ -113,12 +113,7 @@ bool clamp(float &vel, float max, float min) {
 void AMyPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-    if (SideViewCamera) {
-        FVector curLoc = GetActorLocation();
-        FVector cameraLoc = SideViewCamera->GetActorLocation();
-        cameraLoc[1] = curLoc[1];
-        SideViewCamera->SetActorLocation(cameraLoc);
-    }
+    AdjustCameraPos();
     FVector angVel = CurrentShape->GetPhysicsAngularVelocityInDegrees();
     FVector linVel = CurrentShape->GetPhysicsLinearVelocity();
     bool exceedAngVel = false, exceedLinVel = false;
@@ -138,6 +133,22 @@ void AMyPawn::Tick(float DeltaTime)
     if (exceedLinVel) {
         CurrentShape->SetPhysicsLinearVelocity(linVel);
     }
+}
+
+void AMyPawn::AdjustCameraPos() {
+    if (!SideViewCamera) {
+        return;
+    }
+    FVector curLoc = GetActorLocation();
+    FVector cameraLoc = SideViewCamera->GetActorLocation();
+    // Match horizontal position
+    cameraLoc[1] = curLoc[1];
+    float diffZ = curLoc[2] - cameraLoc[2];
+    if (diffZ < -300 || diffZ > 300) {
+        cameraLoc[2] += diffZ > 0 ? 5 : -5;
+    }
+    SideViewCamera->SetActorLocation(cameraLoc);
+    
 }
 
 // Called to bind functionality to input
