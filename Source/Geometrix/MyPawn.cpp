@@ -150,8 +150,11 @@ void AMyPawn::AdjustCameraPos() {
     // Match horizontal position
     cameraLoc[1] = curLoc[1];
     float diffZ = curLoc[2] - cameraLoc[2];
-    if (diffZ < -300 || diffZ > 300) {
-        cameraLoc[2] += diffZ > 0 ? 5 : -5;
+    if (diffZ < -100 || diffZ > 100) {
+        float speedUp = (abs(diffZ) - 100.f) / 100.f;
+        speedUp = speedUp * speedUp;
+        float speed = speedUp * 3;
+        cameraLoc[2] += diffZ > 0 ? speed : -speed;
     }
     SideViewCamera->SetActorLocation(cameraLoc);
     
