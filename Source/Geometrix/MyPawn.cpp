@@ -45,6 +45,9 @@ AMyPawn::AMyPawn() : shape(ShapeEnum::CUBE)
     FoamMat = LoadObject<UMaterial>(NULL, TEXT("/Game/foamMaterial.foamMaterial"), NULL, LOAD_None, NULL);
     SetCubeBounds();
     SetWedgeBounds();
+
+    //coin collection
+    //coinNum = 0;
 }
 
 void AMyPawn::SetCubeBounds() {
