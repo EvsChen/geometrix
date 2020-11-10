@@ -28,7 +28,7 @@ class GEOMETRIX_API AMyPawn : public APawn
     class UStaticMeshComponent* CurrentShape;
     
     class ACameraActor *SideViewCamera;
-  
+    
     class UStaticMesh *CubeMesh, *SphereMesh, *WedgeMesh;
     class UMaterial *FoamMat;
     
@@ -39,8 +39,8 @@ class GEOMETRIX_API AMyPawn : public APawn
     DECLARE_DELEGATE_OneParam(ShapeDelegate, int32);
 
 public:
-	// Sets default values for this pawn's properties
-	AMyPawn();
+	  // Sets default values for this pawn's properties
+	  AMyPawn();
     
     // Called every frame
     virtual void Tick(float DeltaTime) override;
@@ -73,6 +73,7 @@ protected:
     void onHit(AActor* SelfActor, class AActor* OtherActor, FVector NormalImpulse, const FHitResult& Hit);
     
     AActor *collidedSolid;
+    AActor *tutMonitor;
     FVector hitPoint;
     MaterialEnum m_Mat;
     

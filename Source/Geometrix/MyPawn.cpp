@@ -12,6 +12,7 @@
 #include "GameFramework/PlayerController.h"
 #include "Math/Box.h"
 #include "Materials/Material.h"
+#include "TutorialMonitor.h"
 
 #define EPS 0.001
 
@@ -19,8 +20,13 @@ void debugVec(FString s, const FVector &v) {
     UE_LOG(LogTemp, Warning, TEXT("%s is %f %f %f"), *s, v[0], v[1], v[2]);
 }
 
+void debugStr(FString s) {
+    UE_LOG(LogTemp, Warning, TEXT("%s"), *s);
+}
+
 // Sets default values
-AMyPawn::AMyPawn() : shape(ShapeEnum::CUBE)
+AMyPawn::AMyPawn() :
+    shape(ShapeEnum::CUBE)
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -76,24 +82,26 @@ void AMyPawn::SetWedgeBounds() {
 void AMyPawn::BeginPlay()
 {
 	Super::BeginPlay();
-    SwitchShape(1);
-    // Setup camera following
-    TArray<AActor*> outActors;
-    UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACameraActor::StaticClass(), outActors);
-    for (int i = 0; i < outActors.Num(); i++) {
-        FString name = outActors[i]->GetName();
-        if (name == "SideViewCamera") {
-            SideViewCamera = dynamic_cast<ACameraActor*>(outActors[i]);
-        }
-    }
-    if (!SideViewCamera) {
-        UE_LOG(LogTemp, Warning, TEXT("Side view camera not found"));
-    } else {
-        APlayerController *pc = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-        pc->SetViewTargetWithBlend(SideViewCamera);
-    }
-    
-//    OnActorHit.AddDynamic(this, &AMyPawn::onHit);
+  SwitchShape(1);
+  // Setup camera following
+  TArray<AActor*> outActors;
+  UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACameraActor::StaticClass(), outActors);
+  for (int i = 0; i < outActors.Num(); i++) {
+      FString name = outActors[i]->GetName();
+      if (name == "SideViewCamera") {
+          SideViewCamera = dynamic_cast<ACameraActor*>(outActors[i]);
+      }
+  }
+  if (!SideViewCamera) {
+      UE_LOG(LogTemp, Warning, TEXT("Side view camera not found"));
+  } else {
+      APlayerController *pc = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+      pc->SetViewTargetWithBlend(SideViewCamera);
+  }
+  // If in tutorial level
+  if (UGameplayStatics::GetCurrentLevelName(GetWorld()) == "TutorialLevel") {
+    tutMonitor = UGameplayStatics::GetActorOfClass(GetWorld(), ATutorialMonitor::StaticClass()); 
+  }
 }
 
 bool clamp(float &vel, float max, float min) {
@@ -132,12 +140,6 @@ void AMyPawn::Tick(float DeltaTime)
     }
     if (exceedLinVel) {
         CurrentShape->SetPhysicsLinearVelocity(linVel);
-    }
-
-    //Die if fall
-    FVector loc = GetActorLocation();
-    if (loc[2] < -2000.f) {
-
     }
 }
 
@@ -181,6 +183,10 @@ void AMyPawn::SwitchShape(int shapeIdx) {
       CurrentShape->SetStaticMesh(SphereMesh);
       CurrentShape->SetRelativeRotation(FRotator(0, 0, 0));
       CurrentShape->SetRelativeScale3D(FVector(1, 1, 1));
+      if (tutMonitor) {
+        ATutorialMonitor *monitor = Cast<ATutorialMonitor>(tutMonitor);
+        monitor->RecordShapeChange();
+      }
   } else if (shapeIdx == 3) {
       shape = ShapeEnum::WEDGE;
       CurrentShape->SetStaticMesh(WedgeMesh);
@@ -205,6 +211,10 @@ void AMyPawn::MoveRight(float Value)
 {
     if (Value < 0.001 && Value > -0.001) {
         return;
+    }
+    if (tutMonitor) {
+      ATutorialMonitor *monitor = Cast<ATutorialMonitor>(tutMonitor);
+      monitor->RecordMovement(Value);
     }
     float massScale = CurrentShape->GetMassScale();
     Value *= massScale;
