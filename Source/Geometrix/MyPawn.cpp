@@ -168,7 +168,7 @@ void AMyPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
     PlayerInputComponent->BindAxis("MoveRight", this, &AMyPawn::MoveRight);
     PlayerInputComponent->BindAxis("TranslateRight", this, &AMyPawn::TranslateRight);
-    PlayerInputComponent->BindAction<ShapeDelegate>("Shape1", IE_Pressed, this, &AMyPawn::SwitchShape, 1);
+    PlayerInputComoinponent->BindAction<ShapeDelegate>("Shape1", IE_Pressed, this, &AMyPawn::SwitchShape, 1);
     PlayerInputComponent->BindAction<ShapeDelegate>("Shape2", IE_Pressed, this, &AMyPawn::SwitchShape, 2);
     PlayerInputComponent->BindAction<ShapeDelegate>("Shape3", IE_Pressed, this, &AMyPawn::SwitchShape, 3);
 }
