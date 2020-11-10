@@ -81,4 +81,7 @@ private:
     void SetCubeBounds();
     void SetWedgeBounds();
     void AdjustCameraPos();
+
+    //coin collection
+    //int coinNum;
 };
