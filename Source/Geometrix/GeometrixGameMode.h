@@ -13,6 +13,8 @@ class AGeometrixGameMode : public AGameModeBase
 
 public:
 	AGeometrixGameMode();
+  TMap<FString, FVector> defaultStartPos;
+  TMap<FString, FVector> loseStartPos; 
 };
 
 

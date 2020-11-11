@@ -34,6 +34,7 @@ class GEOMETRIX_API AMyPawn : public APawn
     
     FVector cubeBoundLocal[4];
     FVector wedgeBoundLocal[3];
+
     
     // Useful template for adding parameters to bindAction
     DECLARE_DELEGATE_OneParam(ShapeDelegate, int32);

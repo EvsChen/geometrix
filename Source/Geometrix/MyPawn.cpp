@@ -6,13 +6,15 @@
 #include "Engine/StaticMesh.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
-#include "Components/SceneComponent.h"
-#include "Kismet/GameplayStatics.h"
 #include "Camera/CameraActor.h"
+#include "Components/SceneComponent.h"
 #include "GameFramework/PlayerController.h"
+#include "Kismet/GameplayStatics.h"
 #include "Math/Box.h"
 #include "Materials/Material.h"
+
 #include "TutorialMonitor.h"
+#include "GeometrixGameMode.h"
 
 #define EPS 0.001
 
@@ -86,6 +88,15 @@ void AMyPawn::BeginPlay()
 {
 	Super::BeginPlay();
   SwitchShape(1);
+  FString currentLevel = UGameplayStatics::GetCurrentLevelName(GetWorld());
+  AGeometrixGameMode *GameMode = (AGeometrixGameMode *)GetWorld()->GetAuthGameMode();
+  FVector startPos;
+  if (GameMode->loseStartPos.Contains(currentLevel)) {
+    startPos = GameMode->loseStartPos[currentLevel];
+  } else {
+    startPos = GameMode->defaultStartPos[currentLevel];
+  }
+  SetActorLocation(startPos);
   // Setup camera following
   TArray<AActor*> outActors;
   UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACameraActor::StaticClass(), outActors);
@@ -93,16 +104,21 @@ void AMyPawn::BeginPlay()
       FString name = outActors[i]->GetName();
       if (name == "SideViewCamera") {
           SideViewCamera = dynamic_cast<ACameraActor*>(outActors[i]);
+          FVector cameraPos = startPos;
+          cameraPos[0] += 2000;
+          SideViewCamera->SetActorLocation(cameraPos);
+          SideViewCamera->SetActorRotation(FRotator(0, 0, 0));
+          UCameraComponent *cp = SideViewCamera->GetCameraComponent();
+          cp->SetRelativeRotation(FRotator(0, 180, 0));
+          APlayerController *pc = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+          pc->SetViewTargetWithBlend(SideViewCamera);
       }
   }
   if (!SideViewCamera) {
       UE_LOG(LogTemp, Warning, TEXT("Side view camera not found"));
-  } else {
-      APlayerController *pc = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-      pc->SetViewTargetWithBlend(SideViewCamera);
   }
   // If in tutorial level
-  if (UGameplayStatics::GetCurrentLevelName(GetWorld()) == "TutorialLevel") {
+  if (currentLevel == "TutorialLevel") {
     tutMonitor = UGameplayStatics::GetActorOfClass(GetWorld(), ATutorialMonitor::StaticClass()); 
   }
 }

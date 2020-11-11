@@ -12,8 +12,8 @@ class GEOMETRIX_API ATutorialMonitor : public AActor
 	GENERATED_BODY()
 	
 public:	
-	// Sets default values for this actor's properties
-	ATutorialMonitor();
+	  // Sets default values for this actor's properties
+	  ATutorialMonitor();
     
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     FString TutorialStr;

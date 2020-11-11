@@ -28,17 +28,12 @@ AGlobal::AGlobal()
 void AGlobal::BeginPlay()
 {
 	Super::BeginPlay();
-	Score = 0;
-	maxScore = 20;
-
 }
 
 // Called every frame
 void AGlobal::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	
 }
 
 void AGlobal::addScore() {
