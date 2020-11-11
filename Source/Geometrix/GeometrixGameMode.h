@@ -12,9 +12,14 @@ class AGeometrixGameMode : public AGameModeBase
 	GENERATED_BODY()
 
 public:
-	AGeometrixGameMode();
-  TMap<FString, FVector> defaultStartPos;
-  TMap<FString, FVector> loseStartPos; 
+    AGeometrixGameMode();
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+    FString gameStatusString;
+
+    float statusTime = 0.f;
+    
+    virtual void Tick(float DeltaTime) override;
 };
 
 

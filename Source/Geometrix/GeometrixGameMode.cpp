@@ -14,6 +14,16 @@ AGeometrixGameMode::AGeometrixGameMode()
 //		DefaultPawnClass = PlayerPawnBPClass.Class;
 //	}
     DefaultPawnClass = AMyPawn::StaticClass();
-    defaultStartPos.Add("SideScrollerExampleMap", FVector(1200, 2410, 2630));
-    defaultStartPos.Add("TutorialLevel", FVector(1200, 2410, 2630));
+    PrimaryActorTick.bCanEverTick = true;
+}
+
+void AGeometrixGameMode::Tick(float deltaTime) {
+    Super::Tick(deltaTime);
+    if (!gameStatusString.IsEmpty()) {
+        statusTime += deltaTime;
+    }
+    if (statusTime > 5) {
+        statusTime = 0.f;
+        gameStatusString = "";
+    }
 }

@@ -15,6 +15,7 @@
 
 #include "TutorialMonitor.h"
 #include "GeometrixGameMode.h"
+#include "MyGameInstance.h"
 
 #define EPS 0.001
 
@@ -86,17 +87,21 @@ void AMyPawn::SetWedgeBounds() {
 // Called when the game starts or when spawned
 void AMyPawn::BeginPlay()
 {
-	Super::BeginPlay();
+  Super::BeginPlay();
   SwitchShape(1);
   FString currentLevel = UGameplayStatics::GetCurrentLevelName(GetWorld());
-  AGeometrixGameMode *GameMode = (AGeometrixGameMode *)GetWorld()->GetAuthGameMode();
+  UMyGameInstance *GI = (UMyGameInstance *)UGameplayStatics::GetGameInstance(GetWorld());
   FVector startPos;
-  if (GameMode->loseStartPos.Contains(currentLevel)) {
-    startPos = GameMode->loseStartPos[currentLevel];
+    debugStr("MyPawnBeginPlay called");
+  if (GI->loseStartPos.Contains(currentLevel)) {
+    startPos = GI->loseStartPos[currentLevel];
+      debugVec("lostStartpos", startPos);
   } else {
-    startPos = GameMode->defaultStartPos[currentLevel];
+    startPos = GI->defaultStartPos[currentLevel];
+      debugVec("defaultStartPos", startPos);
   }
   SetActorLocation(startPos);
+
   // Setup camera following
   TArray<AActor*> outActors;
   UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACameraActor::StaticClass(), outActors);

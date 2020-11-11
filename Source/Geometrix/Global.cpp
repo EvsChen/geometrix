@@ -5,6 +5,8 @@
 #include "UObject/ConstructorHelpers.h"
 #include "Kismet/GameplayStatics.h"
 
+#include "MyGameInstance.h"
+
 // Sets default values
 AGlobal::AGlobal()
 {
@@ -28,6 +30,11 @@ AGlobal::AGlobal()
 void AGlobal::BeginPlay()
 {
 	Super::BeginPlay();
+    UMyGameInstance *GI = (UMyGameInstance *)UGameplayStatics::GetGameInstance(GetWorld());
+    FString currentLevel = UGameplayStatics::GetCurrentLevelName(GetWorld());
+    if (GI->coinsWhenLost.Contains(currentLevel)) {
+        Score = GI->coinsWhenLost[currentLevel];
+    }
 }
 
 // Called every frame
