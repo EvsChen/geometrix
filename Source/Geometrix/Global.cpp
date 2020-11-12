@@ -24,6 +24,12 @@ AGlobal::AGlobal()
 	{
 		dropSoundCue = (USoundCue*)dropSound.Object;
 	}
+
+	ConstructorHelpers::FObjectFinder<USoundCue> dropSound(TEXT("/Game/SideScrollerCPP/Audio/DropSound.DropSound"));
+	if (dropSound.Object != NULL)
+	{
+		dropSoundCue = (USoundCue*)dropSound.Object;
+	}
 }
 
 // Called when the game starts or when spawned
